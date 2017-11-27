@@ -8,7 +8,7 @@ bittrex.options({
   'apisecret' : APISECRET, 
   'stream' : false, 
   'verbose' : false, 
-  'cleartext' : false 
+  'cleartext' : true
 });
 
 /**
@@ -25,11 +25,4 @@ bittrex.getmarkethistory( { market : 'BTC-LTC' }, function( data ) {
   console.log( data.result );
 });
 
-/**
- *  getorderbook example
- */
-bittrex.getorderbook( { market : 'BTC-PIVX', depth : 10, type : 'both' }, function( data ) {
 
-    data.result.buy.forEach(function(dataset) { console.log(dataset); });
-    data.result.sell.forEach(function(dataset) { console.log(dataset); });
-});
