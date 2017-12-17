@@ -39,7 +39,9 @@ function persist(data, market) {
         }
         // console.log(sql);
         con.query(sql, function (err) {
-            if (err) throw err;
+            if (err){
+                console.log(market + err);
+            }
             // console.log(market + " inserted");
         });
     }
