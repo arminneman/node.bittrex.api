@@ -21,4 +21,17 @@ bittrex.websockets.subscribe(markets, function(data, client) {
 
 
 
-
+// bittrex.getcandles({
+//     marketName: m,
+//     tickInterval: 'onemin'
+// }, function (results, err) {
+//     if (err) {
+//         /**
+//          {
+//            success: false,
+//            message: 'INVALID_TICK_INTERVAL',
+//            result: null
+//          }
+//          */
+//         return console.error(err + m);
+//     }
