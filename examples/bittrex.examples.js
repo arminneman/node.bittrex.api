@@ -1,11 +1,23 @@
 const bittrex = require('../node.bittrex.api');
 const APIKEY = 'KEY';
 const APISECRET = 'SECRET';
+var nodemailer = require('nodemailer');
+
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'arminneman@gmail.com',
+        pass: 'SecurityLab3'
+    }
+});
+
+
 
 var mysql = require('mysql');
 const fs = require('fs');
 const util = require('util')
 var markets = fs.readFileSync('Markets.txt').toString().split("\n");
+var averages = '';
 
 var con = mysql.createConnection({
     host: "localhost",
@@ -23,6 +35,31 @@ bittrex.options({
     'cleartext': true
 });
 
+function getAverage(market){
+    var a= null;
+    con.query("select results.market, results.BV from results where MARKET = " + "'" +market +"'"+ "and T BETWEEN NOW() - INTERVAL 11 hour AND NOW() LIMIT 1", function (err, result, fields) {
+        if (err) throw err;
+        a = result[0];
+    });
+
+    con.query("select results.market, AVG(BV) from results where MARKET = " + "'" + market +"'"+ " and T BETWEEN NOW() - INTERVAL 11 hour AND NOW()-1 LIMIT 10", function (err, result, fields) {
+        if (err) throw err;
+
+        if(a['BV'] / result[0]['AVG(BV)'] > 2){
+            averages += (result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
+            transporter.sendMail(mailOptions, function(error, info){
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log('Email sent: ' + info.response);
+                }
+            });
+            console.log("Alert");
+        }
+        console.log(result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
+
+    });
+}
 
 function persist(data, market) {
 
@@ -67,10 +104,17 @@ for (var i = 0, len = markets.length; i < len; i++) {
                 } else {
                     data = JSON.parse(data);
                     persist(data.result, m);
+                    getAverage(m);
                 }
             }, true
         );
     })();
 }
-console.log("Done");
+
+var mailOptions = {
+    from: 'arminneman@gmail.com',
+    to: 'arminsaraji@gmail.com',
+    subject: 'Sending Email using Node.js',
+    text: averages
+}
 
