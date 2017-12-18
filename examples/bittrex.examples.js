@@ -6,10 +6,14 @@ var nodemailer = require('nodemailer');
 var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'arminneman@gmail.com',
-        pass: 'SecurityLab3'
+        user: '',
+        pass: ''
     }
 });
+
+
+var averages =  new Buffer
+
 
 
 
@@ -17,7 +21,7 @@ var mysql = require('mysql');
 const fs = require('fs');
 const util = require('util')
 var markets = fs.readFileSync('Markets.txt').toString().split("\n");
-var averages = '';
+// var averages = '';
 
 var con = mysql.createConnection({
     host: "localhost",
@@ -45,18 +49,11 @@ function getAverage(market){
     con.query("select results.market, AVG(BV) from results where MARKET = " + "'" + market +"'"+ " and T BETWEEN NOW() - INTERVAL 11 hour AND NOW()-1 LIMIT 10", function (err, result, fields) {
         if (err) throw err;
 
-        if(a['BV'] / result[0]['AVG(BV)'] > 2){
-            averages += (result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
-            transporter.sendMail(mailOptions, function(error, info){
-                if (error) {
-                    console.log(error);
-                } else {
-                    console.log('Email sent: ' + info.response);
-                }
-            });
+        if((a['BV'] / result[0]['AVG(BV)'] > 2) && (a['BV'] !== null && result[0]['AVG(BV)'] !==null) ){
+            averages.fill(result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
             console.log("Alert");
         }
-        console.log(result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
+        // console.log(result[0]['market'] +": " +  (a['BV'] / result[0]['AVG(BV)']));
 
     });
 }
@@ -94,7 +91,7 @@ con.connect(function (err) {
 });
 
 
-for (var i = 0, len = markets.length; i < len; i++) {
+for (var i = 0, len = 50; i < len; i++) {
     (function () {
         var m = markets[i].toString().trim();
         var fullUrl = 'https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=' + m + '&tickInterval=thirtyMin';
@@ -105,6 +102,11 @@ for (var i = 0, len = markets.length; i < len; i++) {
                     data = JSON.parse(data);
                     persist(data.result, m);
                     getAverage(m);
+                    if(i === 50 ){
+                        console.log("test");
+                        sendMail(averages);
+                            console.log("test");
+                    }
                 }
             }, true
         );
@@ -113,8 +115,18 @@ for (var i = 0, len = markets.length; i < len; i++) {
 
 var mailOptions = {
     from: 'arminneman@gmail.com',
-    to: 'arminsaraji@gmail.com',
+    to: 'arminsaraji@gmail.com@',
     subject: 'Sending Email using Node.js',
     text: averages
 }
 
+function sendMail(averages){
+
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    });
+}
